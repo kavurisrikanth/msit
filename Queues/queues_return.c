@@ -20,16 +20,11 @@ struct Node {
 /*
   FUNCTION DECLARATIONS
 */
-// struct Node** insert(int num, struct Node *head, struct Node *tail);
-// struct Node** rem(struct Node *head, struct Node *tail, int *val);
-void insert(int num, struct Node *head, struct Node *tail, struct Node *temp);
-int rem(struct Node *head, struct Node *tail);
-void print_queue(struct Node *head);
-// void set_head(struct Node *ptr);
-// void set_tail(struct Node *ptr);
-// struct Node* get_head();
-// struct Node* get_tail();
 
+void insert(int num, struct Node **head, struct Node **tail);
+int rem(struct Node **head, struct Node **tail);
+void print_queue(struct Node *head);
+void delete_queue(struct Node *head);
 
 
 int main(void) {
@@ -39,8 +34,7 @@ int main(void) {
   // Declare head and node pointers.
   // Don't assign memory to them; the nodes will be created as values are added.
   struct Node *head = NULL,
-              *tail = NULL,
-              *temp = NULL;
+              *tail = NULL;
 
   print_queue(head);
 
@@ -49,22 +43,24 @@ int main(void) {
 
   // Insert 15 random numbers into the queue.
   for(i = 0;i < 15; i++) {
-    insert(rand() % 100, head, tail, temp);
+    // Passing the address of a pointer.
+    insert(rand() % 100, &head, &tail);
   }
 
   print_queue(head);
 
   // and then remove 10 of them
   for(i = 0; i < 10;i++) {
-    printf("removed: %d\n", rem(head, tail));
+    printf("removed: %d\n", rem(&head, &tail));
   }
   print_queue(head);
 
+  delete_queue(head);
 
   return 0;
 }
 
-void insert(int num, struct Node *head, struct Node *tail, struct Node *temp) {
+void insert(int num, struct Node **head, struct Node **tail) {
   /*
     Inserts an element into a queue.
     Inputs: num, int, number to be inserted into the queue.
@@ -73,11 +69,13 @@ void insert(int num, struct Node *head, struct Node *tail, struct Node *temp) {
     Returns: Nothing.
 
     The function should be able to update the head and tail pointers, since it
-    is call-by-reference.
+    is call-by-reference. Spoiler alert, it isn't.
+    It turns out I need to pass the address of the pointer (?)
+    Link: https://stackoverflow.com/questions/15185959/linked-list-without-global-variables
   */
 
   // Create a new node to add to the queue.
-  temp = (struct Node *)calloc(1, sizeof(struct Node));
+  struct Node *temp = (struct Node *)calloc(1, sizeof(struct Node));
   temp->next = NULL;
   temp->num = num;
 
@@ -85,18 +83,20 @@ void insert(int num, struct Node *head, struct Node *tail, struct Node *temp) {
   //   printf("temp NULL\n");
 
   // If the queue is empty, the new node is the first.
-  if(head == NULL) {
-    head = temp;
+  if(*head == NULL) {
+    *head = temp;
   }
 
   // Queue is not empty, so add the new node at the end.
-  if(tail != NULL) {
-    tail->next = temp;
+  if(*tail != NULL) {
+    (*tail)->next = temp;
   }
-  tail = temp;
+  *tail = temp;
+  
+  // print_queue(*head);
 }
 
-int rem(struct Node *head, struct Node *tail) {
+int rem(struct Node **head, struct Node **tail) {
   /*
     Removes a node from the queue.
     Inputs: head, struct Node *, head of the queue
@@ -106,12 +106,12 @@ int rem(struct Node *head, struct Node *tail) {
 
   // If both head and tail are NULL, then there
   // is nothing in the queue.
-  assert(head != NULL && tail != NULL);
+  assert(*head != NULL && *tail != NULL);
 
-  int ans = head->num;
-  struct Node *temp = head;
+  int ans = (*head)->num;
+  struct Node *temp = *head;
 
-  head = head->next;
+  *head = (*head)->next;
   temp->next = NULL;
   free(temp);
   temp = NULL;
@@ -140,18 +140,18 @@ void print_queue(struct Node *head) {
   printf("\n");
 }
 
-// void set_head(struct Node *ptr) {
-//   head = ptr;
-// }
-//
-// void set_tail(struct Node *ptr) {
-//   tail = ptr;
-// }
-//
-// struct Node* get_head() {
-//   return head;
-// }
-//
-// struct Node* get_tail() {
-//   return tail;
-// }
+void delete_queue(struct Node *head) {
+  /*
+    Deletes the queue.
+    So main question: why is it enough to just pass the pointer
+    here, and not in insert?
+  */
+  
+  struct Node *temp = head;
+              
+  while(temp != NULL) {
+    // temp->next = NULL;
+    free(temp);
+    temp = temp->next;
+  }
+}
